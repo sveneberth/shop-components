@@ -264,6 +264,28 @@ export const useViurShopStore = defineStore('viurshopStore', () => {
     return [fallback || error?.customerMessage || error?.message || String(error)]
   }
 
+  /**
+   * Pick up the messages the shop queued for the customer, e.g. a discount it dropped
+   * from the basket on its own.
+   *
+   * The shop empties the queue on this call, so only a caller that shows the messages
+   * should make it. A failure is only logged: the messages are an addition to the
+   * cart, they must not keep it from showing -- and a shop without the endpoint
+   * answers 404.
+   *
+   * @returns {Promise<string[]>} the texts for the customer
+   */
+  async function fetchNotifications() {
+    try {
+      const resp = await Request.post(`${state.shopApiUrl}/notifications`)
+      const data = await resp.json()
+      return clientErrorMessages({ errors: data?.notifications })
+    } catch (error) {
+      console.error(error)
+      return []
+    }
+  }
+
   function blockingErrors(tabName) {
     // Only these two tabs have a server-side reason to be inactive; the others are
     // guarded by plain order state, which carries no message to show.
@@ -416,6 +438,7 @@ export const useViurShopStore = defineStore('viurshopStore', () => {
     checkoutOrder,
     clientErrorMessages,
     errorMessages,
+    fetchNotifications,
     addTab,
     removeTab,
 

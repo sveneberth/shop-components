@@ -195,6 +195,19 @@ onBeforeMount(() => {
   }
 })
 
+// Every load of the basket may have dropped something from it (see
+// `fetchNotifications`). Watched here rather than in `fetchCart`, which the mini cart on
+// every page calls as well: this way only a mounted checkout consumes the messages.
+watch(
+  () => shopStore.state.cartRoot,
+  async () => {
+    const messages = await shopStore.fetchNotifications()
+    if (messages.length) {
+      shopStore.state.navigationErrors = [...new Set([...shopStore.state.navigationErrors, ...messages])]
+    }
+  },
+)
+
 watch(
   () => shopStore.state.currentTab,
   (newVal, oldVal) => {
